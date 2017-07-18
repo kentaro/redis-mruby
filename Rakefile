@@ -6,15 +6,15 @@ REDIS_VERSION = ENV["REDIS_VERSION"] || "stable"
 REDIS_PATH    = "#{VENDOR_DIR}/redis-#{REDIS_VERSION}"
 
 directory MRUBY_PATH do
-  sh "[ ! -e #{MRUBY_PATH} ] && git clone --depth=1 git://github.com/mruby/mruby.git #{MRUBY_PATH}"
+  sh "git clone --depth=1 git://github.com/mruby/mruby.git #{MRUBY_PATH}"
 end
 
 directory REDIS_PATH do
   case REDIS_VERSION
   when "stable"
-    sh "[ ! -e #{REDIS_PATH} ] && wget -O - http://download.redis.io/redis-#{REDIS_VERSION}.tar.gz | tar xzvf - -C #{VENDOR_DIR}"
+    sh "wget -O - http://download.redis.io/redis-#{REDIS_VERSION}.tar.gz | tar xzvf - -C #{VENDOR_DIR}"
   else
-    sh "[ ! -e #{REDIS_PATH} ] && wget -O - http://download.redis.io/releases/redis-#{REDIS_VERSION}.tar.gz | tar zxvf - -C #{VENDOR_DIR}"
+    sh "wget -O - http://download.redis.io/releases/redis-#{REDIS_VERSION}.tar.gz | tar zxvf - -C #{VENDOR_DIR}"
   end
 end
 
