@@ -9,6 +9,10 @@ directory MRUBY_PATH do
   sh "git clone --depth=1 git://github.com/mruby/mruby.git #{MRUBY_PATH}"
 end
 
+file "#{MRUBY_PATH}/build/host/lib/libmruby.a" => MRUBY_PATH do
+  sh "cd #{MRUBY_PATH} && rake all MRUBY_CONFIG=#{MRUBY_CONFIG}"
+end
+
 directory REDIS_PATH do
   case REDIS_VERSION
   when "stable"
@@ -19,8 +23,8 @@ directory REDIS_PATH do
 end
 
 desc "compile binary"
-task :compile => [REDIS_PATH, MRUBY_PATH] do
-  sh "gcc -O2 -shared -fPIC src/mruby.c -I #{REDIS_PATH}/src -o #{BUILD_DIR}/redis-mruby.so"
+task :compile => ["#{MRUBY_PATH}/build/host/lib/libmruby.a", REDIS_PATH] do
+  sh "gcc -O2 -shared -fPIC src/mruby.c -I #{MRUBY_PATH}/include -I #{REDIS_PATH}/src -o #{BUILD_DIR}/redis-mruby.so -shared #{MRUBY_PATH}/build/host/lib/libmruby.a"
 end
 
 desc "clean up"
