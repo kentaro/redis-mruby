@@ -14,7 +14,7 @@ Client:
 
 ```shell
 $ redis-cli
-127.0.0.1:6379> mruby.exec "1 + 1"
+127.0.0.1:6379> mruby.eval "1 + 1"
 "2"
 ```
 

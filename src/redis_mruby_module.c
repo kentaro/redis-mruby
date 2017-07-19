@@ -1,50 +1,45 @@
-#include <stdio.h>
 #include <string.h>
 
-#include "mruby.h"
-#include "mruby/compile.h"
-#include "mruby/string.h"
-
+#include "redis_mruby.h"
 #include "redismodule.h"
 
 int MRubyExec_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
-                           int argc) {
+                           int argc)
+{
+  char *result;
+  char *buf;
+  size_t buf_len;
+  redis_mruby *rm;
+
   if (argc != 2)
     return RedisModule_WrongArity(ctx);
 
-  size_t code_len;
-  const char *code = RedisModule_StringPtrLen(argv[1], &code_len);
-  size_t result_len;
-  char *result;
+  rm = new_redis_mruby();
 
-  mrb_state *mrb;
-  mrb_value value;
+  result = redis_mruby_eval(rm, argv[1]);
+  buf_len = strlen(result);
+  buf = RedisModule_PoolAlloc(ctx, buf_len);
 
-  mrb = mrb_open();
-  value = mrb_load_string(mrb, code);
-  result = (char *)mrb_string_value_ptr(mrb, value);
-  mrb_close(mrb);
-
-  result_len = strlen(result);
-  char *buf = RedisModule_PoolAlloc(ctx, result_len);
-  for (size_t i = 0; i < result_len; i++)
+  for (size_t i = 0; i < buf_len; i++) {
     buf[i] = result[i];
+  }
 
-  if (RedisModule_ReplyWithStringBuffer(ctx, buf, result_len) ==
-      REDISMODULE_ERR)
+  free_redis_mruby(rm);
+
+  if (RedisModule_ReplyWithStringBuffer(ctx, buf, buf_len) == REDISMODULE_ERR)
     return REDISMODULE_ERR;
 
   return REDISMODULE_OK;
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv,
-                       int argc) {
+int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+{
   if (RedisModule_Init(ctx, "mruby", 1, REDISMODULE_APIVER_1) ==
       REDISMODULE_ERR) {
     return REDISMODULE_ERR;
   }
 
-  if (RedisModule_CreateCommand(ctx, "mruby.exec", MRubyExec_RedisCommand,
+  if (RedisModule_CreateCommand(ctx, "mruby.eval", MRubyExec_RedisCommand,
                                 "write deny-oom random fast", 1, 1,
                                 1) == REDISMODULE_ERR) {
     return REDISMODULE_ERR;
