@@ -6,14 +6,14 @@
 
 #include "redismodule.h"
 
-typedef struct redis_mruby_t {
+typedef struct redis_mruby_state_t {
   mrb_state *mrb;
-} redis_mruby;
+} redis_mruby_state;
 
-redis_mruby *new_redis_mruby()
+redis_mruby_state *new_redis_mruby()
 {
-  redis_mruby *self;
-  self = malloc(sizeof(redis_mruby));
+  redis_mruby_state *self;
+  self = malloc(sizeof(redis_mruby_state));
 
   if (self == NULL) {
     return NULL;
@@ -24,12 +24,12 @@ redis_mruby *new_redis_mruby()
   return self;
 }
 
-void free_redis_mruby(redis_mruby *self) {
+void free_redis_mruby(redis_mruby_state *self) {
   mrb_close(self->mrb);
   free(self);
 }
 
-char * redis_mruby_eval(redis_mruby *self, RedisModuleString *str)
+char * redis_mruby_eval(redis_mruby_state *self, RedisModuleString *str)
 {
   const char *code;
   size_t code_len;

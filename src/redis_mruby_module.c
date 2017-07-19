@@ -9,7 +9,7 @@ int MRubyExec_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
   char *result;
   char *buf;
   size_t buf_len;
-  redis_mruby *rm;
+  redis_mruby_state *rm;
 
   if (argc != 2)
     return RedisModule_WrongArity(ctx);
