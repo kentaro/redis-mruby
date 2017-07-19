@@ -24,7 +24,7 @@ end
 
 desc "compile binary"
 task :compile => ["#{MRUBY_PATH}/build/host/lib/libmruby.a", REDIS_PATH] do
-  sh "gcc -O2 -shared -fPIC src/mruby.c -I #{MRUBY_PATH}/include -I #{REDIS_PATH}/src -o #{BUILD_DIR}/redis-mruby.so -shared #{MRUBY_PATH}/build/host/lib/libmruby.a"
+  sh "gcc -O2 -shared -fPIC src/redis-mruby.c -I #{MRUBY_PATH}/include -I #{REDIS_PATH}/src -o #{BUILD_DIR}/redis-mruby.so -shared #{MRUBY_PATH}/build/host/lib/libmruby.a"
 end
 
 desc "clean up"
