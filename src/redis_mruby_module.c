@@ -3,20 +3,26 @@
 #include "redis_mruby.h"
 #include "redismodule.h"
 
-int MRubyExec_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
+int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
                            int argc)
 {
   char *result;
   char *buf;
   size_t buf_len;
+
+  const char *code;
+  size_t code_len;
+  code = RedisModule_StringPtrLen(argv[1], &code_len);
+
   redis_mruby *rm;
 
-  if (argc != 2)
+  if (argc < 2)
     return RedisModule_WrongArity(ctx);
 
   rm = new_redis_mruby();
+  redis_mruby_init(rm, argv, argc);
 
-  result = redis_mruby_eval(rm, argv[1]);
+  result = redis_mruby_eval(rm, code);
   buf_len = strlen(result);
   buf = RedisModule_PoolAlloc(ctx, buf_len);
 
@@ -39,7 +45,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     return REDISMODULE_ERR;
   }
 
-  if (RedisModule_CreateCommand(ctx, "mruby.eval", MRubyExec_RedisCommand,
+  if (RedisModule_CreateCommand(ctx, "mruby.eval", MRubyEval_RedisCommand,
                                 "write deny-oom random fast", 1, 1,
                                 1) == REDISMODULE_ERR) {
     return REDISMODULE_ERR;
