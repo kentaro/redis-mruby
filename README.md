@@ -42,15 +42,15 @@ The return value from mruby code is automatically converted to some form of Redi
 
 | mruby | redis |
 |-----------|------------|
-| true | integer reply with value of 1 (integer) |
-| false | nil bulk reply |
-| Fixnum | integer reply |
-| Float | bulk reply with the the value converted to string expression of equivalent `double` value |
-| String | bulk reply |
-| Array | multi bulk reply |
-| Hash | multi bulk reply with an empty list |
-| Object | multi bulk reply with an empty list |
-| Error | error reply |
+| `true` | integer reply with value of 1 (integer) |
+| `false` | nil bulk reply |
+| `Fixnum` | integer reply |
+| `Float` | bulk reply with the the value converted to string expression of equivalent `double` value |
+| `String` | bulk reply |
+| `Array` | multi bulk reply |
+| `Hash` | multi bulk reply with an empty list |
+| `Object` | multi bulk reply with an empty list |
+| `Exception` | error reply |
 
 Below are several (not complete) examples of type casting.
 
