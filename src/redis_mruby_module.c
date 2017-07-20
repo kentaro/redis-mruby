@@ -1,7 +1,4 @@
-#include <string.h>
-
 #include "redis_mruby.h"
-#include "redismodule.h"
 
 int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value, char **err);
 
@@ -33,8 +30,9 @@ int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
   return REDISMODULE_OK;
 
 ERROR:
+    RedisModule_ReplyWithError(ctx, err);
     redis_mruby_free(rm);
-    return RedisModule_ReplyWithError(ctx, err);
+    return REDISMODULE_ERR;
 }
 
 int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value, char **err) {
@@ -46,12 +44,25 @@ int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value
   }
 
   switch (type) {
+  case MRB_TT_TRUE: {
+    RedisModule_ReplyWithLongLong(ctx, 1);
+    break;
+  }
+  case MRB_TT_FALSE: {
+    RedisModule_ReplyWithNull(ctx);
+    break;
+  }
   case MRB_TT_FLOAT: {
     RedisModule_ReplyWithDouble(ctx, (double)value.value.f);
     break;
   }
   case MRB_TT_FIXNUM: {
     RedisModule_ReplyWithLongLong(ctx, (long long)value.value.i);
+    break;
+  }
+  case MRB_TT_STRING: {
+    RedisModuleString *rstr = RedisModule_CreateStringPrintf(ctx, "%s", mrb_str_to_cstr(rm->mrb, value));
+    RedisModule_ReplyWithString(ctx, rstr);
     break;
   }
   case MRB_TT_ARRAY: {
@@ -64,6 +75,20 @@ int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value
     }
 
     break;
+  }
+  // `EVAL` command seems to return an empty list when return value is a hash. So do we with mruby.
+  case MRB_TT_HASH: {
+    RedisModule_ReplyWithArray(ctx, 0);
+    break;
+  }
+  case MRB_TT_OBJECT: {
+    RedisModule_ReplyWithNull(ctx);
+    break;
+  }
+  case MRB_TT_EXCEPTION: {
+    value = mrb_funcall(rm->mrb, value, "message", 0);
+    *err = mrb_str_to_cstr(rm->mrb, value);
+    return -1;
   }
   default:
     RedisModule_ReplyWithNull(ctx);
