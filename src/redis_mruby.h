@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
 #include "mruby.h"
+#include "mruby/array.h"
 #include "mruby/compile.h"
 #include "mruby/string.h"
-#include "mruby/array.h"
 
 #include "redismodule.h"
 
@@ -32,9 +32,12 @@ redis_mruby *redis_mruby_new()
   return rm;
 }
 
-int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv, int argc, char **error) {
+int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv,
+                               int argc, char **error)
+{
   if (argc < 2) {
-    *error = "Invalid argument(s): argument(s) count must be larger or equal than 2";
+    *error =
+        "Invalid argument(s): argument(s) count must be larger or equal than 2";
     return -1;
   }
 
@@ -46,18 +49,17 @@ int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv, int ar
   if (argc == 2) {
     KEYS = mrb_ary_new_capa(rm->mrb, 0);
     ARGV = mrb_ary_new_capa(rm->mrb, 0);
-  }
-  else {
+  } else {
     int i;
     int num_keys;
     size_t num_keys_len;
 
     num_keys = atoi(RedisModule_StringPtrLen(argv[2], &num_keys_len));
     if (num_keys > (argc - 3)) {
-      *error = "Invalid argument(s): number of keys can't be greater than the number of args";
+      *error = "Invalid argument(s): number of keys can't be greater than the "
+               "number of args";
       return -1;
-    }
-    else if (num_keys < 0) {
+    } else if (num_keys < 0) {
       *error = "Invalid argument(s): number of keys can't be negative";
       return -1;
     }
