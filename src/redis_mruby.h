@@ -33,10 +33,10 @@ redis_mruby *redis_mruby_new()
 }
 
 int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv,
-                               int argc, char **error)
+                               int argc, char **err)
 {
   if (argc < 2) {
-    *error =
+    *err =
         "Invalid argument(s): argument(s) count must be larger or equal than 2";
     return -1;
   }
@@ -56,11 +56,11 @@ int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv,
 
     num_keys = atoi(RedisModule_StringPtrLen(argv[2], &num_keys_len));
     if (num_keys > (argc - 3)) {
-      *error = "Invalid argument(s): number of keys can't be greater than the "
+      *err = "Invalid argument(s): number of keys can't be greater than the "
                "number of args";
       return -1;
     } else if (num_keys < 0) {
-      *error = "Invalid argument(s): number of keys can't be negative";
+      *err = "Invalid argument(s): number of keys can't be negative";
       return -1;
     }
 
@@ -106,12 +106,18 @@ void redis_mruby_free(redis_mruby *rm)
   free(rm);
 }
 
-char *redis_mruby_eval(redis_mruby *rm, const char *code)
+int redis_mruby_eval(redis_mruby *rm, const char *code, char **result, char **err)
 {
   mrb_value value;
-
   value = mrb_load_string(rm->mrb, code);
-  return (char *)mrb_string_value_ptr(rm->mrb, value);
+
+  if (rm->mrb->exc) {
+    *err = (char *)mrb_string_value_ptr(rm->mrb, mrb_obj_value(rm->mrb->exc));
+    return -1;
+  } else {
+    *result = (char *)mrb_string_value_ptr(rm->mrb, value);
+    return 0;
+  }
 }
 
 mrb_value redis_mruby_command_call(mrb_state *mrb, mrb_value self)
