@@ -3,19 +3,18 @@
 #include "redis_mruby.h"
 #include "redismodule.h"
 
+int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value, char **err);
+
 int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
                            int argc)
 {
   char *err;
-  char *result;
-  char *buf;
-  size_t buf_len;
-
   const char *code;
   size_t code_len;
   code = RedisModule_StringPtrLen(argv[1], &code_len);
 
   redis_mruby *rm;
+  mrb_value result;
 
   rm = redis_mruby_new();
   redis_mruby_init(rm);
@@ -26,23 +25,40 @@ int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
   if (redis_mruby_eval(rm, code, &result, &err) < 0)
     goto ERROR;
 
-  buf_len = strlen(result);
-  buf = RedisModule_PoolAlloc(ctx, buf_len);
-
-  for (size_t i = 0; i < buf_len; i++) {
-    buf[i] = result[i];
-  }
+  if (redisReplyFromMrbValue(ctx, rm, result, &err) < 0)
+    goto ERROR;
 
   redis_mruby_free(rm);
-
-  if (RedisModule_ReplyWithStringBuffer(ctx, buf, buf_len) == REDISMODULE_ERR)
-    return REDISMODULE_ERR;
 
   return REDISMODULE_OK;
 
 ERROR:
     redis_mruby_free(rm);
     return RedisModule_ReplyWithError(ctx, err);
+}
+
+int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value, char **err) {
+  enum mrb_vtype type = mrb_type(value);
+
+  if (mrb_nil_p(value)) {
+    RedisModule_ReplyWithNull(ctx);
+    return 0;
+  }
+
+  switch (type) {
+  case MRB_TT_FLOAT: {
+    RedisModule_ReplyWithDouble(ctx, (double)value.value.f);
+    break;
+  }
+  case MRB_TT_FIXNUM: {
+    RedisModule_ReplyWithLongLong(ctx, (long long)value.value.i);
+    break;
+  }
+  default:
+    RedisModule_ReplyWithNull(ctx);
+  }
+
+  return 0;
 }
 
 int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)

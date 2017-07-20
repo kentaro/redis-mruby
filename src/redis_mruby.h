@@ -106,7 +106,7 @@ void redis_mruby_free(redis_mruby *rm)
   free(rm);
 }
 
-int redis_mruby_eval(redis_mruby *rm, const char *code, char **result, char **err)
+int redis_mruby_eval(redis_mruby *rm, const char *code, mrb_value *result, char **err)
 {
   mrb_value value;
   value = mrb_load_string(rm->mrb, code);
@@ -114,10 +114,10 @@ int redis_mruby_eval(redis_mruby *rm, const char *code, char **result, char **er
   if (rm->mrb->exc) {
     *err = (char *)mrb_string_value_ptr(rm->mrb, mrb_obj_value(rm->mrb->exc));
     return -1;
-  } else {
-    *result = (char *)mrb_string_value_ptr(rm->mrb, value);
-    return 0;
   }
+
+  *result = value;
+  return 0;
 }
 
 mrb_value redis_mruby_command_call(mrb_state *mrb, mrb_value self)
