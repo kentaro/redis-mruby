@@ -20,7 +20,7 @@ $ redis-cli
 
 ## Command
 
-### `mruby.eval script [numkeys key1, key2, ...], [arg1, arg2, ...]`
+### `mruby.eval script [[numkeys key1, key2, ...], [arg1, arg2, ...]]`
 
 Compatible to `EVAL` command that uses lua to execute code and is embedded into Redis by default. See [https://redis.io/commands/eval](https://redis.io/commands/eval) for detail.
 
