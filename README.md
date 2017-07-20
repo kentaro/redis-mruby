@@ -34,7 +34,6 @@ You can access `KEYS` and `ARGV` passed via cli in mruby code.
    2) "key2"
 2) 1) "arg1"
    2) "arg2"
-"[[\"key1\", \"key2\"], [\"arg1\", \"arg2\"]]"
 ```
 
 ## Type Casting
