@@ -36,7 +36,7 @@ You can access `KEYS` and `ARGV` passed via cli in mruby code.
    2) "arg2"
 ```
 
-## Type Casting
+## Type Conversion
 
 The return value from mruby code is automatically converted to some form of Redis replies listed below:
 
@@ -52,7 +52,7 @@ The return value from mruby code is automatically converted to some form of Redi
 | `Object` | multi bulk reply with an empty list |
 | `Exception` | error reply |
 
-Below are several (not complete) examples of type casting.
+Below are several (not complete) examples of type conversion.
 
 ### Integer
 
