@@ -54,6 +54,17 @@ int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value
     RedisModule_ReplyWithLongLong(ctx, (long long)value.value.i);
     break;
   }
+  case MRB_TT_ARRAY: {
+    long len = (long)RARRAY_LEN(value);
+    RedisModule_ReplyWithArray(ctx, len);
+
+    for (int i = 0; i < len; i++) {
+      mrb_value v = mrb_ary_ref(rm->mrb, value, i);
+      redisReplyFromMrbValue(ctx, rm, v, err);
+    }
+
+    break;
+  }
   default:
     RedisModule_ReplyWithNull(ctx);
   }
