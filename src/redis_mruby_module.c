@@ -15,12 +15,13 @@ int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
   code = RedisModule_StringPtrLen(argv[1], &code_len);
 
   redis_mruby *rm;
+  char *error;
 
-  if (argc < 2)
-    return RedisModule_WrongArity(ctx);
+  rm = redis_mruby_new();
+  redis_mruby_init(rm);
 
-  rm = new_redis_mruby();
-  redis_mruby_init(rm, argv, argc);
+  if (redis_mruby_init_keys_argv(rm, argv, argc, &error) < 0)
+    return RedisModule_ReplyWithError(ctx, error);
 
   result = redis_mruby_eval(rm, code);
   buf_len = strlen(result);
@@ -30,7 +31,7 @@ int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
     buf[i] = result[i];
   }
 
-  free_redis_mruby(rm);
+  redis_mruby_free(rm);
 
   if (RedisModule_ReplyWithStringBuffer(ctx, buf, buf_len) == REDISMODULE_ERR)
     return REDISMODULE_ERR;

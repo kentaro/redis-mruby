@@ -14,7 +14,7 @@ typedef struct redis_mruby_t {
 mrb_value redis_mruby_command_call(mrb_state *mrb, mrb_value self);
 mrb_value redis_mruby_command_pcall(mrb_state *mrb, mrb_value self);
 
-redis_mruby *new_redis_mruby()
+redis_mruby *redis_mruby_new()
 {
   redis_mruby *rm;
 
@@ -32,42 +32,63 @@ redis_mruby *new_redis_mruby()
   return rm;
 }
 
-int redis_mruby_init(redis_mruby *rm, RedisModuleString **argv, int argc)
-{
+int redis_mruby_init_keys_argv(redis_mruby *rm, RedisModuleString **argv, int argc, char **error) {
+  if (argc < 2) {
+    *error = "Invalid argument(s): argument(s) count must be larger or equal than 2";
+    return -1;
+  }
+
   mrb_value KEYS;
   mrb_value ARGV;
 
-  int i; // counter for args
+  // argc == 2: cmd, code
+  // argc >= 3: cmd, code, key_count, key1, key2, ..., arg1, arg2, ...
+  if (argc == 2) {
+    KEYS = mrb_ary_new_capa(rm->mrb, 0);
+    ARGV = mrb_ary_new_capa(rm->mrb, 0);
+  }
+  else {
+    int i;
+    int num_keys;
+    size_t num_keys_len;
 
-  int count;
-  size_t count_len;
-  count = atoi(RedisModule_StringPtrLen(argv[2], &count_len));
+    num_keys = atoi(RedisModule_StringPtrLen(argv[2], &num_keys_len));
+    if (num_keys > (argc - 3)) {
+      *error = "Invalid argument(s): number of keys can't be greater than the number of args";
+      return -1;
+    }
+    else if (num_keys < 0) {
+      *error = "Invalid argument(s): number of keys can't be negative";
+      return -1;
+    }
 
-  // args: command, code, key_count, key1, key2, ..., arg1, arg2, ...
-  if (argc < count + 3) {
-    return NULL;
+    KEYS = mrb_ary_new_capa(rm->mrb, num_keys);
+    for (i = 3; i < num_keys + 3; i++) {
+      const char *arg;
+      size_t arg_len;
+
+      arg = RedisModule_StringPtrLen(argv[i], &arg_len);
+      mrb_ary_push(rm->mrb, KEYS, mrb_str_new(rm->mrb, arg, arg_len));
+    }
+
+    ARGV = mrb_ary_new_capa(rm->mrb, argc - num_keys - 3);
+    for (; i < argc; i++) {
+      const char *arg;
+      size_t arg_len;
+
+      arg = RedisModule_StringPtrLen(argv[i], &arg_len);
+      mrb_ary_push(rm->mrb, ARGV, mrb_str_new(rm->mrb, arg, arg_len));
+    }
   }
 
-  KEYS = mrb_ary_new_capa(rm->mrb, count);
-  for (i = 3; i < count + 3; i++) {
-    const char *arg;
-    size_t arg_len;
-
-    arg = RedisModule_StringPtrLen(argv[i], &arg_len);
-    mrb_ary_push(rm->mrb, KEYS, mrb_str_new(rm->mrb, arg, arg_len));
-  }
   mrb_define_global_const(rm->mrb, "KEYS", KEYS);
-
-  ARGV = mrb_ary_new_capa(rm->mrb, argc - count - 3);
-  for (; i < argc; i++) {
-    const char *arg;
-    size_t arg_len;
-
-    arg = RedisModule_StringPtrLen(argv[i], &arg_len);
-    mrb_ary_push(rm->mrb, ARGV, mrb_str_new(rm->mrb, arg, arg_len));
-  }
   mrb_define_global_const(rm->mrb, "ARGV", ARGV);
 
+  return 0;
+}
+
+void redis_mruby_init(redis_mruby *rm)
+{
   struct RClass *class;
   class = mrb_define_class(rm->mrb, "Redis", rm->mrb->object_class);
 
@@ -77,7 +98,7 @@ int redis_mruby_init(redis_mruby *rm, RedisModuleString **argv, int argc)
                           MRB_ARGS_REQ(1));
 }
 
-void free_redis_mruby(redis_mruby *rm)
+void redis_mruby_free(redis_mruby *rm)
 {
   mrb_close(rm->mrb);
   free(rm);
