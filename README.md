@@ -2,7 +2,7 @@
 
 A Redis module to evaluate mruby code.
 
-## SYNOPSYS
+## Usage
 
 Server:
 
@@ -24,7 +24,7 @@ $ redis-cli
 
 Compatible to `EVAL` command that is embedded into Redis. See [https://redis.io/commands/eval](https://redis.io/commands/eval) for detail.
 
-## Embeded Arrays
+## Embedded Arrays
 
 You can access `KEYS` and `ARGV` passed via cli in mruby code. 
 
@@ -33,10 +33,10 @@ You can access `KEYS` and `ARGV` passed via cli in mruby code.
 "[[\"key1\", \"key2\"], [\"arg1\", \"arg2\"]]"
 ```
 
-## AUTHOR
+## Author
 
 Kentaro Kuribayashi
 
-## LICENSE
+## License
 
 MIT
