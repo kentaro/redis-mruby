@@ -41,7 +41,7 @@ You can access `KEYS` and `ARGV` passed via cli in mruby code.
 The return value from mruby code is automatically converted to some form of Redis replies listed below:
 
 | mruby | redis |
-|:-----------:|:------------:|
+|-----------|------------|
 | true | integer reply with value of 1 (integer) |
 | false | nil bulk reply |
 | Fixnum | integer reply |
