@@ -3,6 +3,7 @@
 #include "mruby.h"
 #include "mruby/array.h"
 #include "mruby/compile.h"
+#include "mruby/hash.h"
 #include "mruby/string.h"
 
 #include "redismodule.h"

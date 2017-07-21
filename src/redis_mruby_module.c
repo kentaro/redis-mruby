@@ -76,8 +76,25 @@ int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value
 
     break;
   }
-  // `EVAL` command seems to return an empty list when return value is a hash. So do we with mruby.
+  // HASH can be either `{'ok' => MSG}` or `{'err' => MSG}`
+  // that are returned from `Redis.call` or `Redis.pcall` method.
   case MRB_TT_HASH: {
+    mrb_value msg;
+
+    msg = mrb_hash_get(rm->mrb, value, mrb_str_new_cstr(rm->mrb, "ok"));
+    if (!mrb_nil_p(msg)) {
+      // RedisModuleString *rstr = RedisModule_CreateStringPrintf(ctx, "+%s\r\n", mrb_str_to_cstr(rm->mrb, msg));
+      // RedisModule_ReplyWithString(ctx, rstr);
+      RedisModule_ReplyWithSimpleString(ctx, mrb_str_to_cstr(rm->mrb, mrb_inspect(rm->mrb, msg)));
+      return 0;
+    }    
+
+    msg = mrb_hash_get(rm->mrb, value, mrb_str_new_cstr(rm->mrb, "err"));
+    if (!mrb_nil_p(msg)) {
+      *err = mrb_str_to_cstr(rm->mrb, mrb_inspect(rm->mrb, msg));
+      return -1;
+    }    
+
     RedisModule_ReplyWithArray(ctx, 0);
     break;
   }
