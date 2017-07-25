@@ -26,7 +26,6 @@ int MRubyEval_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
     goto ERROR;
 
   redis_mruby_free(rm);
-
   return REDISMODULE_OK;
 
 ERROR:
@@ -81,20 +80,21 @@ int redisReplyFromMrbValue(RedisModuleCtx *ctx, redis_mruby *rm, mrb_value value
   case MRB_TT_HASH: {
     mrb_value msg;
 
+    // When the return value has a pair which has a key of "ok"
     msg = mrb_hash_get(rm->mrb, value, mrb_str_new_cstr(rm->mrb, "ok"));
-    if (!mrb_nil_p(msg)) {
-      // RedisModuleString *rstr = RedisModule_CreateStringPrintf(ctx, "+%s\r\n", mrb_str_to_cstr(rm->mrb, msg));
-      // RedisModule_ReplyWithString(ctx, rstr);
-      RedisModule_ReplyWithSimpleString(ctx, mrb_str_to_cstr(rm->mrb, mrb_inspect(rm->mrb, msg)));
+    if (!mrb_nil_p(msg) && mrb_type(msg) == MRB_TT_STRING) {
+      RedisModule_ReplyWithSimpleString(ctx, mrb_str_to_cstr(rm->mrb, msg));
       return 0;
-    }    
+    }
 
+    // When the return value has a pair which has a key of "err"
     msg = mrb_hash_get(rm->mrb, value, mrb_str_new_cstr(rm->mrb, "err"));
-    if (!mrb_nil_p(msg)) {
-      *err = mrb_str_to_cstr(rm->mrb, mrb_inspect(rm->mrb, msg));
+    if (!mrb_nil_p(msg) && mrb_type(msg) == MRB_TT_STRING) {
+      *err = mrb_str_to_cstr(rm->mrb, msg);
       return -1;
-    }    
+    }
 
+    // Or, return an empty list
     RedisModule_ReplyWithArray(ctx, 0);
     break;
   }
